@@ -17,18 +17,20 @@ limitations under the License.
 package v1
 
 import (
-	qjob_v1 "github.com/kubernetes-incubator/kube-arbitrator/pkg/apis/v1"
+	time "time"
+
+	q_v1 "github.com/kubernetes-incubator/kube-arbitrator/pkg/apis/v1"
 	internalinterfaces "github.com/kubernetes-incubator/kube-arbitrator/pkg/client/informers/internalinterfaces"
 	v1 "github.com/kubernetes-incubator/kube-arbitrator/pkg/client/listers/queuejob/v1"
+
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/rest"
 	cache "k8s.io/client-go/tools/cache"
-	time "time"
 )
 
 // QueueJobInformer provides access to a shared informer and lister for
-// QueueJobs.
+// QueueJob.
 type QueueJobInformer interface {
 	Informer() cache.SharedIndexInformer
 	Lister() v1.QueueJobLister
@@ -45,13 +47,13 @@ func NewQueueJobInformer(client *rest.RESTClient, namespace string, resyncPeriod
 
 	source := cache.NewListWatchFromClient(
 		client,
-		qjob_v1.QueueJobPlural,
+		q_v1.QueueJobPlural,
 		namespace,
 		fields.Everything())
 
 	return cache.NewSharedIndexInformer(
 		source,
-		&qjob_v1.QueueJob{},
+		&q_v1.QueueJob{},
 		resyncPeriod,
 		indexers,
 	)
@@ -62,7 +64,7 @@ func defaultQueueJobInformer(client *rest.RESTClient, resyncPeriod time.Duration
 }
 
 func (f *queueJobInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&qjob_v1.QueueJob{}, defaultQueueJobInformer)
+	return f.factory.InformerFor(&q_v1.QueueJob{}, defaultQueueJobInformer)
 }
 
 func (f *queueJobInformer) Lister() v1.QueueJobLister {

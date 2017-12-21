@@ -24,27 +24,27 @@ import (
 	rest "k8s.io/client-go/rest"
 )
 
-type CrdV1Interface interface {
+type ArbV1Interface interface {
 	RESTClient() rest.Interface
 	QueueGetter
-	TasksetGetter
+	QueuejobGetter
 }
 
-// CrdV1Client is used to interact with features provided by the  group.
-type CrdV1Client struct {
+// ArbV1Client is used to interact with features provided by the  group.
+type ArbV1Client struct {
 	restClient rest.Interface
 }
 
-func (c *CrdV1Client) Queues(namespace string) QueueInterface {
+func (c *ArbV1Client) Queues(namespace string) QueueInterface {
 	return newQueues(c, namespace)
 }
 
-func (c *CrdV1Client) Tasksets(namespace string) TasksetInterface {
-	return newTasksets(c, namespace)
+func (c *ArbV1Client) Queuejobs(namespace string) QueuejobInterface {
+	return newQueuejobs(c, namespace)
 }
 
-// NewForConfig creates a new CoreV1Client for the given config.
-func NewForConfig(c *rest.Config) (*CrdV1Client, error) {
+// NewForConfig creates a new ArbV1Client for the given config.
+func NewForConfig(c *rest.Config) (*ArbV1Client, error) {
 	config := *c
 	if err := setConfigDefaults(&config); err != nil {
 		return nil, err
@@ -53,12 +53,12 @@ func NewForConfig(c *rest.Config) (*CrdV1Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &CrdV1Client{client}, nil
+	return &ArbV1Client{client}, nil
 }
 
-// NewForConfigOrDie creates a new CrdV1Client for the given config and
+// NewForConfigOrDie creates a new ArbV1Client for the given config and
 // panics if there is an error in the config.
-func NewForConfigOrDie(c *rest.Config) *CrdV1Client {
+func NewForConfigOrDie(c *rest.Config) *ArbV1Client {
 	client, err := NewForConfig(c)
 	if err != nil {
 		panic(err)
@@ -66,9 +66,9 @@ func NewForConfigOrDie(c *rest.Config) *CrdV1Client {
 	return client
 }
 
-// New creates a new CrdV1Client for the given RESTClient.
-func New(c rest.Interface) *CrdV1Client {
-	return &CrdV1Client{c}
+// New creates a new ArbV1Client for the given RESTClient.
+func New(c rest.Interface) *ArbV1Client {
+	return &ArbV1Client{c}
 }
 
 func setConfigDefaults(config *rest.Config) error {
@@ -87,7 +87,7 @@ func setConfigDefaults(config *rest.Config) error {
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *CrdV1Client) RESTClient() rest.Interface {
+func (c *ArbV1Client) RESTClient() rest.Interface {
 	if c == nil {
 		return nil
 	}
