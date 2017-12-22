@@ -14,34 +14,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package crdclientset
+package arbclientset
 
 import (
-	crdv1 "github.com/kubernetes-incubator/kube-arbitrator/pkg/client/crdclientset/typed/crd/v1"
+	"github.com/kubernetes-incubator/kube-arbitrator/pkg/client/arbclientset/typed/arb/v1"
 
 	rest "k8s.io/client-go/rest"
 )
 
 type Interface interface {
-	CrdV1() crdv1.CrdV1Interface
+	ArbV1() v1.ArbV1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
-	crdv1 *crdv1.CrdV1Client
+	arbv1 *v1.ArbV1Client
 }
 
 // CoreV1 retrieves the CoreV1Client
-func (c *Clientset) CrdV1() crdv1.CrdV1Interface {
-	return c.crdv1
+func (c *Clientset) ArbV1() v1.ArbV1Interface {
+	return c.arbv1
 }
 
 // NewForConfig creates a new Clientset for the given config.
 func NewForConfig(c *rest.Config) (*Clientset, error) {
 	var cs Clientset
 	var err error
-	cs.crdv1, err = crdv1.NewForConfig(c)
+	cs.arbv1, err = v1.NewForConfig(c)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.crdv1 = crdv1.NewForConfigOrDie(c)
+	cs.arbv1 = v1.NewForConfigOrDie(c)
 
 	return &cs
 }
@@ -60,7 +60,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.crdv1 = crdv1.New(c)
+	cs.arbv1 = v1.New(c)
 
 	return &cs
 }

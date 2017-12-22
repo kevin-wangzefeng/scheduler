@@ -18,7 +18,7 @@ package v1
 
 import (
 	"github.com/kubernetes-incubator/kube-arbitrator/pkg/apis/v1"
-	"github.com/kubernetes-incubator/kube-arbitrator/pkg/client/crdclientset/scheme"
+	"github.com/kubernetes-incubator/kube-arbitrator/pkg/client/arbclientset/scheme"
 
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	rest "k8s.io/client-go/rest"
@@ -44,7 +44,7 @@ type queues struct {
 }
 
 // newQueues returns a Queues
-func newQueues(c *CrdV1Client, namespace string) *queues {
+func newQueues(c *ArbV1Client, namespace string) *queues {
 	return &queues{
 		client: c.RESTClient(),
 		ns:     namespace,

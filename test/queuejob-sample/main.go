@@ -47,32 +47,32 @@ const (
 	JobStatusDone    jobStatus = "Done"
 )
 
-type TaskSetInfo struct {
-	priority    int
-	taskSetName string
-	jobName     string
-	taskNo      int32
-	status      jobStatus
+type QueueJobInfo struct {
+	priority     int
+	queueJobName string
+	jobName      string
+	taskNo       int32
+	status       jobStatus
 }
 
 type BatchJobSample struct {
-	namespace    string
-	kubeconfig   string
-	queue        string
-	taskno       int32
-	sleeptime    string
-	config       *rest.Config
-	taskSetToJob []*TaskSetInfo
+	namespace     string
+	kubeconfig    string
+	queue         string
+	taskno        int32
+	sleeptime     string
+	config        *rest.Config
+	queueJobToJob []*QueueJobInfo
 }
 
-func (t *BatchJobSample) printTaskSetStatus() {
-	for _, ts := range t.taskSetToJob {
-		fmt.Printf("----> *** The job <%s> under taskset <%s> is <%s>, priority=<%d>\n", ts.jobName, ts.taskSetName, ts.status, ts.priority)
+func (t *BatchJobSample) printQueueJobStatus() {
+	for _, ts := range t.queueJobToJob {
+		fmt.Printf("----> *** The job <%s> under queuejob <%s> is <%s>, priority=<%d>\n", ts.jobName, ts.queueJobName, ts.status, ts.priority)
 	}
 	fmt.Println()
 }
 
-func (t *BatchJobSample) doCreateJob(taskSetInfo *TaskSetInfo) error {
+func (t *BatchJobSample) doCreateJob(queueJobInfo *QueueJobInfo) error {
 	// create job test
 	startCmd := "echo sleep_start ; sleep " + t.sleeptime + " ; echo sleep_done"
 	container := corev1.Container{
@@ -96,7 +96,7 @@ func (t *BatchJobSample) doCreateJob(taskSetInfo *TaskSetInfo) error {
 	}
 	testJob := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      taskSetInfo.jobName,
+			Name:      queueJobInfo.jobName,
 			Namespace: t.namespace,
 		},
 		Spec: batchv1.JobSpec{
@@ -106,7 +106,7 @@ func (t *BatchJobSample) doCreateJob(taskSetInfo *TaskSetInfo) error {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "sleep",
 					Labels: map[string]string{
-						"preemptionrank": strconv.Itoa(taskSetInfo.priority),
+						"preemptionrank": strconv.Itoa(queueJobInfo.priority),
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -122,16 +122,16 @@ func (t *BatchJobSample) doCreateJob(taskSetInfo *TaskSetInfo) error {
 	return err
 }
 
-func (t *BatchJobSample) doDeleteTaskSet(taskSetInfo *TaskSetInfo) error {
-	taskSetClient, _, err := client.NewTaskSetClient(t.config)
+func (t *BatchJobSample) doDeleteQueueJob(queueJobInfo *QueueJobInfo) error {
+	queueJobClient, _, err := client.NewQueueJobClient(t.config)
 	if err != nil {
 		panic(err)
 	}
 
-	err = taskSetClient.Delete().
+	err = queueJobClient.Delete().
 		Namespace(t.namespace).
-		Resource(apiv1.TaskSetPlural).
-		Name(taskSetInfo.taskSetName).
+		Resource(apiv1.QueueJobPlural).
+		Name(queueJobInfo.queueJobName).
 		Body(&metav1.DeleteOptions{}).
 		Do().
 		Error()
@@ -139,17 +139,17 @@ func (t *BatchJobSample) doDeleteTaskSet(taskSetInfo *TaskSetInfo) error {
 	return err
 }
 
-func (t *BatchJobSample) findTaskSetInfoByName(name string) *TaskSetInfo {
-	for _, v := range t.taskSetToJob {
-		if v.taskSetName == name {
+func (t *BatchJobSample) findQueueJobInfoByName(name string) *QueueJobInfo {
+	for _, v := range t.queueJobToJob {
+		if v.queueJobName == name {
 			return v
 		}
 	}
 	return nil
 }
 
-func (t *BatchJobSample) findTaskSetInfoByJob(name string) *TaskSetInfo {
-	for _, v := range t.taskSetToJob {
+func (t *BatchJobSample) findQueueJobInfoByJob(name string) *QueueJobInfo {
+	for _, v := range t.queueJobToJob {
 		if v.jobName == name {
 			return v
 		}
@@ -157,7 +157,7 @@ func (t *BatchJobSample) findTaskSetInfoByJob(name string) *TaskSetInfo {
 	return nil
 }
 
-func (t *BatchJobSample) changeJobStatus(info *TaskSetInfo, status jobStatus) {
+func (t *BatchJobSample) changeJobStatus(info *QueueJobInfo, status jobStatus) {
 	info.status = status
 }
 
@@ -187,44 +187,44 @@ func (t *BatchJobSample) initOrDie() {
 	}
 	t.config = config
 
-	// create 3 taskset under same namespace
-	ts1 := &TaskSetInfo{
-		priority:    1,
-		taskSetName: t.namespace + "-ts-01",
-		jobName:     t.namespace + "-job-01",
-		taskNo:      t.taskno,
-		status:      JobStatusPending,
+	// create 3 queuejob under same namespace
+	ts1 := &QueueJobInfo{
+		priority:     1,
+		queueJobName: t.namespace + "-ts-01",
+		jobName:      t.namespace + "-job-01",
+		taskNo:       t.taskno,
+		status:       JobStatusPending,
 	}
-	ts2 := &TaskSetInfo{
-		priority:    2,
-		taskSetName: t.namespace + "-ts-02",
-		jobName:     t.namespace + "-job-02",
-		taskNo:      t.taskno,
-		status:      JobStatusPending,
+	ts2 := &QueueJobInfo{
+		priority:     2,
+		queueJobName: t.namespace + "-ts-02",
+		jobName:      t.namespace + "-job-02",
+		taskNo:       t.taskno,
+		status:       JobStatusPending,
 	}
-	ts3 := &TaskSetInfo{
-		priority:    3,
-		taskSetName: t.namespace + "-ts-03",
-		jobName:     t.namespace + "-job-03",
-		taskNo:      t.taskno,
-		status:      JobStatusPending,
+	ts3 := &QueueJobInfo{
+		priority:     3,
+		queueJobName: t.namespace + "-ts-03",
+		jobName:      t.namespace + "-job-03",
+		taskNo:       t.taskno,
+		status:       JobStatusPending,
 	}
-	t.taskSetToJob = []*TaskSetInfo{
+	t.queueJobToJob = []*QueueJobInfo{
 		ts1,
 		ts2,
 		ts3,
 	}
-	taskSetClient, _, err := client.NewTaskSetClient(config)
+	queueJobClient, _, err := client.NewQueueJobClient(config)
 	if err != nil {
 		panic(err)
 	}
-	for _, info := range t.taskSetToJob {
-		ts := &apiv1.TaskSet{
+	for _, info := range t.queueJobToJob {
+		ts := &apiv1.QueueJob{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      info.taskSetName,
+				Name:      info.queueJobName,
 				Namespace: t.namespace,
 			},
-			Spec: apiv1.TaskSetSpec{
+			Spec: apiv1.QueueJobSpec{
 				Queue:      t.queue,
 				Priority:   info.priority,
 				ResourceNo: int(info.taskNo),
@@ -237,9 +237,9 @@ func (t *BatchJobSample) initOrDie() {
 			},
 		}
 
-		var result apiv1.TaskSet
-		err = taskSetClient.Post().
-			Resource(apiv1.TaskSetPlural).
+		var result apiv1.QueueJob
+		err = queueJobClient.Post().
+			Resource(apiv1.QueueJobPlural).
 			Namespace(ts.Namespace).
 			Body(ts).
 			Do().Into(&result)
@@ -248,35 +248,35 @@ func (t *BatchJobSample) initOrDie() {
 		}
 	}
 
-	t.printTaskSetStatus()
+	t.printQueueJobStatus()
 }
 
-func (t *BatchJobSample) AddTaskSet(obj interface{}) {
-	taskset, ok := obj.(*apiv1.TaskSet)
+func (t *BatchJobSample) AddQueueJob(obj interface{}) {
+	queuejob, ok := obj.(*apiv1.QueueJob)
 	if !ok {
-		glog.Errorf("Cannot convert to *apiv1.TaskSet: %v", obj)
+		glog.Errorf("Cannot convert to *apiv1.QueueJob: %v", obj)
 		return
 	}
-	glog.V(4).Infof("====== taskset %s is added\n", taskset.Name)
+	glog.V(4).Infof("====== queuejob %s is added\n", queuejob.Name)
 }
 
-func (t *BatchJobSample) UpdateTaskSet(oldObj, newObj interface{}) {
-	oldTaskset, ok := oldObj.(*apiv1.TaskSet)
+func (t *BatchJobSample) UpdateQueueJob(oldObj, newObj interface{}) {
+	oldQueueJob, ok := oldObj.(*apiv1.QueueJob)
 	if !ok {
-		glog.Errorf("Cannot convert oldObj to *apiv1.TaskSet: %v", oldObj)
+		glog.Errorf("Cannot convert oldObj to *apiv1.QueueJob: %v", oldObj)
 		return
 	}
-	newTaskset, ok := newObj.(*apiv1.TaskSet)
+	newQueueJob, ok := newObj.(*apiv1.QueueJob)
 	if !ok {
-		glog.Errorf("Cannot convert newObj to *apiv1.TaskSet: %v", newObj)
+		glog.Errorf("Cannot convert newObj to *apiv1.QueueJob: %v", newObj)
 		return
 	}
 
-	glog.V(4).Infof("taskset is updated, old %s, new %s\n", oldTaskset.Name, newTaskset.Name)
-	info := t.findTaskSetInfoByName(newTaskset.Name)
-	if info != nil && info.status == JobStatusPending && newTaskset.Status.Allocated.Resources != nil {
-		cpuRes := newTaskset.Status.Allocated.Resources["cpu"]
-		memRes := newTaskset.Status.Allocated.Resources["memory"]
+	glog.V(4).Infof("queuejob is updated, old %s, new %s\n", oldQueueJob.Name, newQueueJob.Name)
+	info := t.findQueueJobInfoByName(newQueueJob.Name)
+	if info != nil && info.status == JobStatusPending && newQueueJob.Status.Allocated.Resources != nil {
+		cpuRes := newQueueJob.Status.Allocated.Resources["cpu"]
+		memRes := newQueueJob.Status.Allocated.Resources["memory"]
 		cpuInt, _ := cpuRes.AsInt64()
 		memInt, _ := memRes.AsInt64()
 		if info != nil && cpuInt >= int64(info.taskNo) {
@@ -286,20 +286,20 @@ func (t *BatchJobSample) UpdateTaskSet(oldObj, newObj interface{}) {
 			if err != nil {
 				fmt.Printf("====== Fail to create job %s, %#v\n", info.jobName, err)
 			} else {
-				fmt.Printf("----> Taskset <%s> get enough resources cpu <%d> memory <%d>, then submit job <%s> to cluster\n", info.taskSetName, cpuInt, memInt, info.jobName)
-				t.printTaskSetStatus()
+				fmt.Printf("----> queuejob <%s> get enough resources cpu <%d> memory <%d>, then submit job <%s> to cluster\n", info.queueJobName, cpuInt, memInt, info.jobName)
+				t.printQueueJobStatus()
 			}
 		}
 	}
 }
 
-func (t *BatchJobSample) DeleteTaskSet(obj interface{}) {
-	taskset, ok := obj.(*apiv1.TaskSet)
+func (t *BatchJobSample) DeleteQueueJob(obj interface{}) {
+	queuejob, ok := obj.(*apiv1.QueueJob)
 	if !ok {
-		glog.Errorf("Cannot convert to *apiv1.TaskSet: %v", obj)
+		glog.Errorf("Cannot convert to *apiv1.QueueJob: %v", obj)
 		return
 	}
-	glog.V(4).Infof("====== taskset %s is delete\n", taskset.Name)
+	glog.V(4).Infof("====== queuejob %s is delete\n", queuejob.Name)
 }
 
 func (t *BatchJobSample) AddJob(obj interface{}) {
@@ -328,16 +328,16 @@ func (t *BatchJobSample) UpdateJob(oldObj, newObj interface{}) {
 	newConditions := newJob.Status.Conditions
 	for _, con := range newConditions {
 		if con.Type == batchv1.JobComplete && con.Status == corev1.ConditionTrue {
-			info := t.findTaskSetInfoByJob(newJob.Name)
+			info := t.findQueueJobInfoByJob(newJob.Name)
 			if info != nil {
 				t.changeJobStatus(info, JobStatusDone)
-				err := t.doDeleteTaskSet(info)
+				err := t.doDeleteQueueJob(info)
 				if err != nil {
-					fmt.Printf("====== Fail to delete taskset %s, %#v\n", info.taskSetName, err)
+					fmt.Printf("====== Fail to delete queuejob %s, %#v\n", info.queueJobName, err)
 				} else {
-					fmt.Printf("----> Job <%s> is done, then delete taskset %s from cluster to release resources\n", info.jobName, info.taskSetName)
+					fmt.Printf("----> Job <%s> is done, then delete queuejob %s from cluster to release resources\n", info.jobName, info.queueJobName)
 				}
-				t.printTaskSetStatus()
+				t.printQueueJobStatus()
 			}
 		}
 	}
@@ -353,28 +353,28 @@ func (t *BatchJobSample) DeleteJob(obj interface{}) {
 }
 
 func (t *BatchJobSample) Run(stopCh <-chan struct{}) {
-	taskSetClient, _, err := client.NewTaskSetClient(t.config)
+	queueJobClient, _, err := client.NewQueueJobClient(t.config)
 	if err != nil {
 		panic(err)
 	}
-	tsInformerFactory := qInformerfactory.NewSharedInformerFactory(taskSetClient, 0)
-	// create informer for taskset
-	taskSetInformer := tsInformerFactory.TaskSet().TaskSets()
-	taskSetInformer.Informer().AddEventHandler(
+	tsInformerFactory := qInformerfactory.NewSharedInformerFactory(queueJobClient, 0)
+	// create informer for queuejob
+	queueJobInformer := tsInformerFactory.QueueJob().QueueJobs()
+	queueJobInformer.Informer().AddEventHandler(
 		cache.FilteringResourceEventHandler{
 			FilterFunc: func(obj interface{}) bool {
 				switch t := obj.(type) {
-				case *apiv1.TaskSet:
-					glog.V(4).Infof("Filter taskset name(%s) namespace(%s)\n", t.Name, t.Namespace)
+				case *apiv1.QueueJob:
+					glog.V(4).Infof("Filter queuejob name(%s) namespace(%s)\n", t.Name, t.Namespace)
 					return true
 				default:
 					return false
 				}
 			},
 			Handler: cache.ResourceEventHandlerFuncs{
-				AddFunc:    t.AddTaskSet,
-				UpdateFunc: t.UpdateTaskSet,
-				DeleteFunc: t.DeleteTaskSet,
+				AddFunc:    t.AddQueueJob,
+				UpdateFunc: t.UpdateQueueJob,
+				DeleteFunc: t.DeleteQueueJob,
 			},
 		})
 	// create informer for job
@@ -400,7 +400,7 @@ func (t *BatchJobSample) Run(stopCh <-chan struct{}) {
 		},
 	)
 
-	go taskSetInformer.Informer().Run(stopCh)
+	go queueJobInformer.Informer().Run(stopCh)
 	go jobInformer.Informer().Run(stopCh)
 }
 

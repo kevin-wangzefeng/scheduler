@@ -19,8 +19,7 @@ package informers
 import (
 	internalinterfaces "github.com/kubernetes-incubator/kube-arbitrator/pkg/client/informers/internalinterfaces"
 	q_v1 "github.com/kubernetes-incubator/kube-arbitrator/pkg/client/informers/queue/v1"
-	qjob_v1 "github.com/kubernetes-incubator/kube-arbitrator/pkg/client/informers/queuejob/v1"
-	ts_v1 "github.com/kubernetes-incubator/kube-arbitrator/pkg/client/informers/taskset/v1"
+	qj_v1 "github.com/kubernetes-incubator/kube-arbitrator/pkg/client/informers/queuejob/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
@@ -110,19 +109,14 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	QueueJob() qjob_v1.Interface
 	Queue() q_v1.Interface
-	TaskSet() ts_v1.Interface
-}
-
-func (f *sharedInformerFactory) QueueJob() qjob_v1.Interface {
-	return qjob_v1.New(f)
+	QueueJob() qj_v1.Interface
 }
 
 func (f *sharedInformerFactory) Queue() q_v1.Interface {
 	return q_v1.New(f)
 }
 
-func (f *sharedInformerFactory) TaskSet() ts_v1.Interface {
-	return ts_v1.New(f)
+func (f *sharedInformerFactory) QueueJob() qj_v1.Interface {
+	return qj_v1.New(f)
 }
